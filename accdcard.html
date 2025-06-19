@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>后现代叙事线上小卡</title>
+  <style>
+    body {
+      font-family: "微软雅黑", Arial, sans-serif;
+      background-color: #f0e6d2;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px 70px;
+      min-height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      margin-bottom: 25px;
+      font-weight: 600;
+      color: #4a3f35;
+    }
+    #deck {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-bottom: 30px;
+      justify-content: center;
+    }
+    .card {
+      width: 130px;
+      height: 190px;
+      perspective: 1000px;
+      cursor: pointer;
+      border-radius: 14px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+    }
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 14px;
+      transition: transform 0.6s cubic-bezier(0.4,0,0.2,1);
+      transform-style: preserve-3d;
+      box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+    }
+    .card.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+    .card-front, .card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 14px;
+      backface-visibility: hidden;
+      overflow: hidden;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      box-sizing: border-box;
+      text-align: center;
+    }
+    .card-front {
+      transform: rotateY(180deg);
+      background-color: #fff;
+      color: #222;
+      font-size: 14px;
+      line-height: 1.5;
+      font-weight: 500;
+      box-shadow: inset 0 0 10px #ccc;
+      padding: 20px 14px;
+      flex-direction: column;
+    }
+    .card-back {
+      background-size: cover;
+      background-position: center center;
+      box-shadow: inset 0 0 60px rgba(0,0,0,0.3);
+    }
+    button {
+      background-color: #333333;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 8px;
+      color: #eee;
+      font-size: 17px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s, transform 0.3s;
+    }
+    button:hover {
+      background-color: #555555;
+      transform: scale(1.05);
+    }
+    footer {
+      margin-top: 40px;
+      text-align: center;
+      color: #666;
+    }
+    footer .line1 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #444;
+    }
+    footer .line2 {
+      font-size: 11px;
+      margin-top: 4px;
+      letter-spacing: 1px;
+    }
+    @media (max-width: 768px) {
+      .card {
+        width: 44vw;
+        height: 66vw;
+      }
+      .card-front {
+        font-size: 13px;
+        padding: 16px 10px;
+      }
+      button {
+        width: 90%;
+        font-size: 16px;
+        padding: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>后现代叙事线上小卡</h1>
+  <div id="deck"></div>
+  <button id="reshuffleBtn">重新开始抽牌</button>
+  <footer>
+    <div class="line1">多元对话实验空间</div>
+    <div class="line2">亞洲創意對話中心</div>
+  </footer>
+  <script>
+    const floralImages = [
+      "https://i.ibb.co/FLFTW74h/1.jpg",
+      "https://i.ibb.co/whjqzmcF/2.jpg",
+      "https://i.ibb.co/S73GjnqL/3.jpg",
+      "https://i.ibb.co/B2frzDYB/4.jpg",
+      "https://i.ibb.co/BKdk1xpY/5.jpg"
+    ];
+
+    const narrativesPool = [
+      "时间的裂缝中，我见证了自我的重生。",
+      "记忆如同流沙，在指尖悄然消逝。",
+      "破碎的镜面映照出无限的可能。",
+      "无根的风，吹散了过往的阴霾。",
+      "故事未完，文字已在空气中凝结。",
+      "存在与虚无交织，轮回不断循环。",
+      "每一次翻牌，都是新的叙事起点。",
+      "沉默隐藏了无数未说的秘密。",
+      "光影交错，时间被重新编织。",
+      "未知的边界，等待着被探寻与突破。"
+    ];
+
+    const cardCount = 5;
+    const deckEl = document.getElementById("deck");
+    const reshuffleBtn = document.getElementById("reshuffleBtn");
+
+    // 洗牌函数，Fisher-Yates Shuffle
+    function shuffle(array) {
+      let arr = array.slice();
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // 随机选不重复背景图
+    function loadAssignedBackgrounds() {
+      let shuffled = shuffle(floralImages);
+      return shuffled.slice(0, cardCount);
+    }
+
+    // 随机抽取 narratives，不重复
+    function getRandomNarratives(n) {
+      let copy = [...narrativesPool];
+      let result = [];
+      for (let i = 0; i < n; i++) {
+        if (copy.length === 0) break;
+        const idx = Math.floor(Math.random() * copy.length);
+        result.push(copy[idx]);
+        copy.splice(idx, 1);
+      }
+      return result;
+    }
+
+    function createCard(narrative, index, backgroundUrl) {
+      const card = document.createElement("div");
+      card.classList.add("card");
+
+      const inner = document.createElement("div");
+      inner.classList.add("card-inner");
+
+      const front = document.createElement("div");
+      front.classList.add("card-front");
+      front.textContent = narrative;
+
+      const back = document.createElement("div");
+      back.classList.add("card-back");
+      back.style.backgroundImage = `url(${backgroundUrl})`;
+
+      inner.appendChild(front);
+      inner.appendChild(back);
+      card.appendChild(inner);
+
+      card.addEventListener("click", () => {
+        card.classList.toggle("flipped");
+      });
+
+      return card;
+    }
+
+    function renderDeck() {
+      deckEl.innerHTML = "";
+      const assignedBackgrounds = loadAssignedBackgrounds();
+      const narratives = getRandomNarratives(cardCount);
+
+      for(let i = 0; i < cardCount; i++) {
+        const cardEl = createCard(narratives[i], i, assignedBackgrounds[i]);
+        deckEl.appendChild(cardEl);
+      }
+    }
+
+    reshuffleBtn.addEventListener("click", () => {
+      renderDeck();
+    });
+
+    renderDeck();
+  </script>
+</body>
+</html>
